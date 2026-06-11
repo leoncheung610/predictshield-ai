@@ -9,6 +9,7 @@ import { GlassCard } from '../components/ui/GlassCard'
 import { AnimatedButton } from '../components/ui/AnimatedButton'
 import { useApp } from '../context/AppContext'
 import { quickScenarios, chatResponses, mockRiskProfile, mockMarketMatches } from '../data/mockData'
+import { allDemoScenarios } from '../data/demoScenarios'
 
 interface Message {
   id: string
@@ -17,18 +18,23 @@ interface Message {
 }
 
 export default function RiskChat() {
+  const { setRiskProfile, setMarketMatches, setHedgePositions, setScenarioId, scenarioId, riskProfile, marketMatches } = useApp()
+
+  // Auto-load scenario data if coming from DemoSelector
+  const welcomeMsg = riskProfile
+    ? `I've loaded the scenario data for your risk analysis. Here's a summary:\n\n**Hazard:** ${riskProfile.hazard}\n**Exposure Window:** ${riskProfile.exposureWindow}\n**Financial Exposure:** HKD ${riskProfile.financialExposure.toLocaleString()}\n**Risk Level:** ${riskProfile.riskLevel === 'Critical' ? '🔴' : riskProfile.riskLevel === 'High' ? '🟠' : '🟡'} ${riskProfile.riskLevel}\n\nYou can explore the full analysis, or describe a different risk to start a new assessment.`
+    : 'Welcome to PredictShield AI! I\'m your risk analysis assistant. Describe your business operations and the risks you\'re concerned about, and I\'ll help you identify hedging opportunities through prediction markets.\n\nYou can type your risk description, choose a quick scenario, or upload trade documents to get started.'
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       type: 'ai',
-      content:
-        'Welcome to PredictShield AI! I\'m your risk analysis assistant. Describe your business operations and the risks you\'re concerned about, and I\'ll help you identify hedging opportunities through prediction markets.\n\nYou can type your risk description, choose a quick scenario, or upload trade documents to get started.',
+      content: welcomeMsg,
     },
   ])
   const [isTyping, setIsTyping] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { setRiskProfile, setMarketMatches } = useApp()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -42,15 +48,23 @@ export default function RiskChat() {
   const simulateAIResponse = (userMessage: string) => {
     setIsTyping(true)
     const isShipping = userMessage.toLowerCase().includes('ship') || userMessage.toLowerCase().includes('red sea') || userMessage.toLowerCase().includes('freight')
-    const responseKey = isShipping ? 'shipping' : 'default'
+    const isTariff = userMessage.toLowerCase().includes('tariff') || userMessage.toLowerCase().includes('import') || userMessage.toLowerCase().includes('export')
+    const isESG = userMessage.toLowerCase().includes('carbon') || userMessage.toLowerCase().includes('esg') || userMessage.toLowerCase().includes('cbam')
+
+    let selectedScenario = allDemoScenarios[0] // default shipping
+    if (isTariff) selectedScenario = allDemoScenarios[1]
+    if (isESG) selectedScenario = allDemoScenarios[2]
 
     setTimeout(() => {
       setIsTyping(false)
+      const responseKey = isShipping ? 'shipping' : 'default'
       addMessage('ai', chatResponses[responseKey])
 
-      // Set the risk profile in context
-      setRiskProfile(mockRiskProfile)
-      setMarketMatches(mockMarketMatches)
+      // Set the risk profile from scenario data
+      setScenarioId(selectedScenario.id)
+      setRiskProfile(selectedScenario.data.profile)
+      setMarketMatches(selectedScenario.data.markets)
+      setHedgePositions(selectedScenario.data.positions)
     }, 2000)
   }
 
@@ -67,11 +81,14 @@ export default function RiskChat() {
   const handleDocumentUpload = (docName: string) => {
     addMessage('user', `I've uploaded a trade document: ${docName}`)
     addMessage('ai', `I've received your document "${docName}". Analyzing the contents...\n\n**Document Analysis Complete:**\n- **Type:** Bill of Lading\n- **Route:** Asia → Europe via Suez Canal\n- **Cargo Value:** HKD 200,000\n- **Transit Period:** June – July 2026\n\nI've identified significant geopolitical and transit delay risks. Let me generate a full risk profile and matching hedge proposals.`)
-    setRiskProfile(mockRiskProfile)
-    setMarketMatches(mockMarketMatches)
+    const defaultScenario = allDemoScenarios[0]
+    setScenarioId(defaultScenario.id)
+    setRiskProfile(defaultScenario.data.profile)
+    setMarketMatches(defaultScenario.data.markets)
+    setHedgePositions(defaultScenario.data.positions)
   }
 
-  const hasAnalysis = messages.some((m) => m.content.includes('risk profile') || m.content.includes('Risk Type') || m.content.includes('Hazard'))
+  const hasAnalysis = messages.some((m) => m.content.includes('risk profile') || m.content.includes('Risk Type') || m.content.includes('Hazard') || m.content.includes('Exposure Window'))
 
   return (
     <div className="h-[calc(100vh-4rem)] flex">

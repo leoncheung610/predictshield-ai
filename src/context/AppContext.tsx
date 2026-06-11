@@ -37,6 +37,7 @@ interface AppState {
   riskProfile: RiskProfile | null
   hedgePositions: HedgePosition[]
   marketMatches: MarketMatch[]
+  scenarioId: string
 }
 
 interface AppContextType extends AppState {
@@ -44,7 +45,9 @@ interface AppContextType extends AppState {
   logout: () => void
   setRiskProfile: (profile: RiskProfile) => void
   addHedgePosition: (position: HedgePosition) => void
+  setHedgePositions: (positions: HedgePosition[]) => void
   setMarketMatches: (matches: MarketMatch[]) => void
+  setScenarioId: (id: string) => void
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -98,6 +101,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     riskProfile: null,
     hedgePositions: defaultHedges,
     marketMatches: [],
+    scenarioId: 'shipping',
   })
 
   const login = (name: string) => {
@@ -116,13 +120,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, hedgePositions: [...s.hedgePositions, position] }))
   }
 
+  const setHedgePositions = (positions: HedgePosition[]) => {
+    setState((s) => ({ ...s, hedgePositions: positions }))
+  }
+
   const setMarketMatches = (matches: MarketMatch[]) => {
     setState((s) => ({ ...s, marketMatches: matches }))
   }
 
+  const setScenarioId = (id: string) => {
+    setState((s) => ({ ...s, scenarioId: id }))
+  }
+
   return (
     <AppContext.Provider
-      value={{ ...state, login, logout, setRiskProfile, addHedgePosition, setMarketMatches }}
+      value={{ ...state, login, logout, setRiskProfile, addHedgePosition, setHedgePositions, setMarketMatches, setScenarioId }}
     >
       {children}
     </AppContext.Provider>

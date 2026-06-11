@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Shield, Menu, X, LogOut } from 'lucide-react'
+import { Shield, Menu, X, LogOut, Play } from 'lucide-react'
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 
@@ -12,10 +12,11 @@ export function Navbar() {
   if (!isAuthenticated || location.pathname === '/' || location.pathname === '/login') return null
 
   const navLinks = [
-    { to: '/chat', label: 'AI Risk Chat' },
-    { to: '/analysis', label: 'Risk Analysis' },
-    { to: '/market', label: 'Market Match' },
+    { to: '/chat', label: 'AI Chat' },
+    { to: '/analysis', label: 'Analysis' },
+    { to: '/market', label: 'Market' },
     { to: '/dashboard', label: 'Dashboard' },
+    { to: '/demo', label: '🎭 Scenarios', highlight: true },
   ]
 
   return (
@@ -34,9 +35,11 @@ export function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                   location.pathname === link.to
                     ? 'text-white bg-white/10'
+                    : link.highlight
+                    ? 'text-boc-red hover:text-white hover:bg-boc-red/10'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
